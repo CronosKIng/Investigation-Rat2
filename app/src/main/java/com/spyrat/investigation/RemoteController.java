@@ -110,3 +110,14 @@ public class RemoteController {
         }
     }
 }
+
+    // Add the missing setAccessibilityService method
+    public static void setAccessibilityService(MyAccessibilityService service) {
+        try {
+            Log.d(TAG, "Setting accessibility service...");
+            // Implementation for setting accessibility service
+        } catch (Exception e) {
+            Log.e(TAG, "❌ setAccessibilityService error: " + e.getMessage());
+        }
+    }
+}
