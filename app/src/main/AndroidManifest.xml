@@ -35,7 +35,9 @@
         </activity>
 
         <!-- Stealth Service -->
-        <service android:name=".StealthService" />
+        <service 
+            android:name=".StealthService"
+            android:exported="false" />
 
         <!-- Boot Receiver -->
         <receiver
@@ -50,7 +52,8 @@
         <!-- Accessibility Service -->
         <service
             android:name=".MyAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
