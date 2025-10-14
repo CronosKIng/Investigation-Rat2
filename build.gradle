@@ -5,7 +5,7 @@ buildscript {
 }
 
 allprojects {
-    // No repositories here - all in settings.gradle
+    // No repositories here - all repositories in settings.gradle
 }
 
 task clean(type: Delete) {
