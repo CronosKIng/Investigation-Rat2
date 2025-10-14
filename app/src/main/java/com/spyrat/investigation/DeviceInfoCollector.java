@@ -62,7 +62,7 @@ public class DeviceInfoCollector {
                 if (context.checkCallingOrSelfPermission(android.Manifest.permission.READ_PHONE_STATE) 
                     == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        deviceInfo.put("imei", telephonyManager.getImei());
+                        // deviceInfo.put("imei", "imei_placeholder");
                     }
                 }
             }
