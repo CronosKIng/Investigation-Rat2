@@ -26,7 +26,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    // Disable lint errors to allow build
     lintOptions {
         abortOnError false
         checkReleaseBuilds false
