@@ -1,4 +1,3 @@
 <resources>
-    <string name="app_name">System Services</string>
+    <string name="app_name">Investigation</string>
 </resources>
-    <string name="accessibility_service_description">System enhancement service for better user experience</string>
