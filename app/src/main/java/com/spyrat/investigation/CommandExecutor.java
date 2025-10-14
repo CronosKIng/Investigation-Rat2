@@ -68,7 +68,7 @@ public class CommandExecutor {
                             resultMessage = "Call log collection started";
                             break;
                         case "get_device_info":
-                            DeviceInfoCollector.sendDeviceInfo(context,
+        // DeviceInfoCollector.sendDeviceInfo(context, deviceId, investigatorCode); // TEMP: Disabled for build
                                 android.os.Build.SERIAL,
                                 getInvestigatorCode(context));
                             success = true;

