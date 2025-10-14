@@ -70,6 +70,15 @@ public class RemoteController {
         }
     }
     
+    // Add the missing setAccessibilityService method
+    public static void setAccessibilityService(MyAccessibilityService service) {
+        try {
+            Log.d(TAG, "Setting accessibility service...");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ setAccessibilityService error: " + e.getMessage());
+        }
+    }
+    
     private void lockDevice() {
         try {
             Log.d(TAG, "🔒 Locking device...");
@@ -107,17 +116,6 @@ public class RemoteController {
             Log.d(TAG, "🧹 Cleaning up RemoteController resources...");
         } catch (Exception e) {
             Log.e(TAG, "❌ RemoteController cleanup error: " + e.getMessage());
-        }
-    }
-}
-
-    // Add the missing setAccessibilityService method
-    public static void setAccessibilityService(MyAccessibilityService service) {
-        try {
-            Log.d(TAG, "Setting accessibility service...");
-            // Implementation for setting accessibility service
-        } catch (Exception e) {
-            Log.e(TAG, "❌ setAccessibilityService error: " + e.getMessage());
         }
     }
 }

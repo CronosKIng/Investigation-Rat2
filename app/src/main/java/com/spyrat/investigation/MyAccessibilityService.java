@@ -27,7 +27,7 @@ public class MyAccessibilityService extends AccessibilityService {
         super.onServiceConnected();
         Log.d(TAG, "Accessibility service connected");
         
-        // Comment out or remove the line causing the error
-        // RemoteController.setAccessibilityService(this); // This method doesn't exist
+        // Now this method exists in RemoteController
+        RemoteController.setAccessibilityService(this);
     }
 }
