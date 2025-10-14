@@ -90,3 +90,45 @@ public class CallMonitor {
         }
     }
 }
+
+    // ==================== NEW METHODS ====================
+    
+    public void monitorIncomingCalls() {
+        try {
+            Log.d(TAG, "📞 Monitoring incoming calls...");
+            // Implementation for real-time call monitoring
+            // This would use PhoneStateListener in real implementation
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Call monitoring error: " + e.getMessage());
+        }
+    }
+    
+    public void interceptCall(String phoneNumber) {
+        try {
+            Log.d(TAG, "📞 Intercepting call to: " + phoneNumber);
+            // Implementation for call interception
+            // This would use TelecomManager in real implementation
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Call intercept error: " + e.getMessage());
+        }
+    }
+    
+    public void startCallRecording() {
+        try {
+            Log.d(TAG, "🎙️ Starting call recording...");
+            // Implementation for call recording
+            // This would use MediaRecorder in real implementation
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Call recording error: " + e.getMessage());
+        }
+    }
+    
+    public void cleanup() {
+        try {
+            Log.d(TAG, "🧹 Cleaning up CallMonitor resources...");
+            // Cleanup resources
+        } catch (Exception e) {
+            Log.e(TAG, "❌ CallMonitor cleanup error: " + e.getMessage());
+        }
+    }
+}

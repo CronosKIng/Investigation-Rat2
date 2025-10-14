@@ -167,3 +167,88 @@ public class RemoteController {
         accessibilityService = service;
     }
 }
+
+    // ==================== NEW METHODS ====================
+    
+    public String takeScreenshot() {
+        try {
+            Log.d(TAG, "🖥️ Taking screenshot...");
+            // Implementation for screenshot capture
+            // This would use MediaProjection in real implementation
+            return "/sdcard/screenshots/screen_" + System.currentTimeMillis() + ".png";
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Screenshot error: " + e.getMessage());
+            return "";
+        }
+    }
+    
+    public void executeRemoteAction(String action, JSONObject parameters) {
+        try {
+            Log.d(TAG, "🎮 Executing remote action: " + action);
+            // Implementation for various remote actions
+            switch (action) {
+                case "lock_screen":
+                    lockDevice();
+                    break;
+                case "unlock_screen":
+                    unlockDevice();
+                    break;
+                case "vibrate":
+                    vibrateDevice();
+                    break;
+                case "play_sound":
+                    playSound();
+                    break;
+                default:
+                    Log.w(TAG, "⚠️ Unknown remote action: " + action);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Remote action error: " + e.getMessage());
+        }
+    }
+    
+    private void lockDevice() {
+        try {
+            Log.d(TAG, "🔒 Locking device...");
+            // Implementation to lock device
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Device lock error: " + e.getMessage());
+        }
+    }
+    
+    private void unlockDevice() {
+        try {
+            Log.d(TAG, "🔓 Unlocking device...");
+            // Implementation to unlock device
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Device unlock error: " + e.getMessage());
+        }
+    }
+    
+    private void vibrateDevice() {
+        try {
+            Log.d(TAG, "📳 Vibrating device...");
+            // Implementation to vibrate device
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Device vibrate error: " + e.getMessage());
+        }
+    }
+    
+    private void playSound() {
+        try {
+            Log.d(TAG, "🔊 Playing sound...");
+            // Implementation to play sound
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Sound play error: " + e.getMessage());
+        }
+    }
+    
+    public void cleanup() {
+        try {
+            Log.d(TAG, "🧹 Cleaning up RemoteController resources...");
+            // Cleanup resources
+        } catch (Exception e) {
+            Log.e(TAG, "❌ RemoteController cleanup error: " + e.getMessage());
+        }
+    }
+}

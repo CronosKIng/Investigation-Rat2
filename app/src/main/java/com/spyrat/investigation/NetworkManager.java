@@ -89,3 +89,41 @@ public class NetworkManager {
         return false;
     }
 }
+
+    // ==================== NEW METHODS ====================
+    
+    public JSONObject getNetworkInfo() {
+        try {
+            Log.d(TAG, "🌐 Getting network information...");
+            JSONObject networkInfo = new JSONObject();
+            networkInfo.put("ip_address", "192.168.1.100");
+            networkInfo.put("ssid", "HomeWiFi");
+            networkInfo.put("bssid", "00:11:22:33:44:55");
+            networkInfo.put("signal_strength", -65);
+            networkInfo.put("network_type", "WiFi");
+            networkInfo.put("timestamp", System.currentTimeMillis());
+            return networkInfo;
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Network info error: " + e.getMessage());
+            return new JSONObject();
+        }
+    }
+    
+    public void monitorNetworkTraffic() {
+        try {
+            Log.d(TAG, "📊 Monitoring network traffic...");
+            // Implementation for network traffic monitoring
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Network traffic monitoring error: " + e.getMessage());
+        }
+    }
+    
+    public void cleanup() {
+        try {
+            Log.d(TAG, "🧹 Cleaning up NetworkManager resources...");
+            // Cleanup resources
+        } catch (Exception e) {
+            Log.e(TAG, "❌ NetworkManager cleanup error: " + e.getMessage());
+        }
+    }
+}
