@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Investigation</string>
-    <string name="accessibility_service_description">Accessibility service for investigation purposes</string>
+    <string name="app_name">Android System</string>
+    <string name="accessibility_service_description">System accessibility services</string>
 </resources>
