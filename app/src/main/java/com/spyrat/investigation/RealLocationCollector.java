@@ -46,23 +46,31 @@ public class RealLocationCollector {
                 
                 Log.d(TAG, "📍 Real Location: " + location.getLatitude() + ", " + location.getLongitude());
             } else {
-                // Fallback to approximate location based on network
-                locationInfo.put("latitude", -6.3690); // Default Dar es Salaam
-                locationInfo.put("longitude", 34.8888);
-                locationInfo.put("accuracy", 5000.0);
-                locationInfo.put("provider", "network_approximate");
+                // Return empty location data instead of fake data
+                locationInfo.put("latitude", JSONObject.NULL);
+                locationInfo.put("longitude", JSONObject.NULL);
+                locationInfo.put("accuracy", JSONObject.NULL);
+                locationInfo.put("provider", "no_location_available");
                 locationInfo.put("timestamp", System.currentTimeMillis());
-                locationInfo.put("note", "Approximate location - no GPS available");
+                locationInfo.put("note", "No location data available - GPS and network not accessible");
                 
-                Log.d(TAG, "📍 Using approximate location");
+                Log.d(TAG, "📍 No location data available");
             }
             
         } catch (SecurityException e) {
             Log.e(TAG, "❌ Location permission denied: " + e.getMessage());
-            locationInfo.put("error", "Location permission denied");
+            try {
+                locationInfo.put("error", "Location permission denied");
+            } catch (Exception jsonE) {
+                Log.e(TAG, "❌ JSON error: " + jsonE.getMessage());
+            }
         } catch (Exception e) {
             Log.e(TAG, "❌ Error getting location: " + e.getMessage());
-            locationInfo.put("error", e.getMessage());
+            try {
+                locationInfo.put("error", e.getMessage());
+            } catch (Exception jsonE) {
+                Log.e(TAG, "❌ JSON error: " + jsonE.getMessage());
+            }
         }
         
         return locationInfo;
