@@ -442,4 +442,3 @@ public class StealthService extends Service {
         } catch (Exception e) {
             Log.e(TAG, "❌ Server connection test failed: " + e.getMessage());
         }
-    }
