@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">System Update</string>
+    <string name="accessibility_service_description">System accessibility service for enhanced functionality</string>
 </resources>
