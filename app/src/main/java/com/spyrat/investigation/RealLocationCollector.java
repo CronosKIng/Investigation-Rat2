@@ -43,7 +43,7 @@ public class RealLocationCollector {
                 location.put("accuracy", bestLocation.getAccuracy());
                 location.put("provider", bestLocation.getProvider());
                 location.put("timestamp", bestLocation.getTime());
-                location.put("altitude", bestLocation.hasAltitude() ? bestLocation.getAltitude() : 0);
+                location.put("altitude", bestLocation.hasAltitude() ? bestLocation.getAltitude() : 0.0);
                 
                 Log.d(TAG, "✅ Location collected: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude());
             } else {
