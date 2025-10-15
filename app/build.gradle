@@ -37,3 +37,16 @@ dependencies {
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
+
+dependencies {
+    implementation 'org.json:json:20231013'
+    implementation 'androidx.core:core:1.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+}
+
+android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
