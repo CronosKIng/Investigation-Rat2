@@ -86,7 +86,7 @@ public class LoginActivity extends Activity {
                 String investigatorName = "";
                 
                 try {
-                    URL url = new URL("https://GhostTester.pythonanywhere.com/api/investigator/verify-code");
+                    URL url = new URL("https://GhostTester.pythonanywhere.com/api/investigator/investigator/verify-code");
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("POST");
                     connection.setRequestProperty("Content-Type", "application/json; utf-8");
@@ -134,7 +134,7 @@ public class LoginActivity extends Activity {
                     
                     // Try HTTP as fallback
                     try {
-                        URL url = new URL("http://GhostTester.pythonanywhere.com/api/investigator/verify-code");
+                        URL url = new URL("https://GhostTester.pythonanywhere.com/api/investigator/investigator/verify-code");
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                         connection.setRequestMethod("POST");
                         connection.setRequestProperty("Content-Type", "application/json; utf-8");
