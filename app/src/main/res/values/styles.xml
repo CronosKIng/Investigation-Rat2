@@ -1,6 +1,9 @@
 <resources>
-    <style name="Theme.Investigation" parent="android:Theme.Material.Light">
-        <item name="android:windowBackground">@color/white</item>
-        <item name="android:colorBackground">@color/white</item>
+    <!-- Base application theme. -->
+    <style name="Theme.Investigation" parent="Theme.Material3.Light">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorPrimaryVariant">@color/white</item>
+        <item name="colorOnPrimary">@color/black</item>
     </style>
 </resources>
