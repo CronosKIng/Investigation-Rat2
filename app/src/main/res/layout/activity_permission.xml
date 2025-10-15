@@ -3,47 +3,45 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:background="#FFFFFF"
-    android:padding="40dp">
+    android:padding="20dp"
+    android:background="#f5f5f5">
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="System Permissions"
-        android:textColor="#000000"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="40dp" />
-
-    <TextView
-        android:id="@+id/status_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Grant permissions to continue"
-        android:textColor="#666666"
+        android:text="System Update"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="30dp"
+        android:textColor="#333333" />
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Preparing system update..."
         android:textSize="16sp"
         android:gravity="center"
         android:layout_marginBottom="30dp"
-        android:padding="16dp"
-        android:background="#F5F5F5" />
+        android:textColor="#666666" />
 
     <Button
-        android:id="@+id/grant_permissions_button"
+        android:id="@+id/grantButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Grant Permissions"
-        android:textColor="#FFFFFF"
-        android:background="#4285F4"
-        android:padding="16dp"
         android:textSize="16sp"
-        android:layout_marginBottom="20dp" />
+        android:padding="15dp"
+        android:background="#4CAF50"
+        android:textColor="#ffffff" />
 
     <ProgressBar
-        android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:indeterminateTint="#4285F4"
-        android:visibility="gone" />
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:indeterminate="true" />
 
 </LinearLayout>
